@@ -47,8 +47,8 @@ class Html extends StatelessWidget {
   /// **style** Pass in the style information for the Html here.
   /// See [its wiki page](https://github.com/Sub6Resources/flutter_html/wiki/Style) for more info.
   Html({
-    Key? key,
-    required this.data,
+    Key key,
+    @required this.data,
     this.onLinkTap,
     this.customRender = const {},
     this.customImageRenders = const {},
@@ -64,7 +64,7 @@ class Html extends StatelessWidget {
         super(key: key);
 
   Html.fromDom({
-    Key? key,
+    Key key,
     @required this.document,
     this.onLinkTap,
     this.customRender = const {},
@@ -81,24 +81,24 @@ class Html extends StatelessWidget {
         super(key: key);
 
   /// The HTML data passed to the widget as a String
-  final String? data;
+  final String data;
 
   /// The HTML data passed to the widget as a pre-processed [dom.Document]
-  final dom.Document? document;
+  final dom.Document document;
 
   /// A function that defines what to do when a link is tapped
-  final OnTap? onLinkTap;
+  final OnTap onLinkTap;
 
   /// An API that allows you to customize the entire process of image rendering.
   /// See the README for more details.
   final Map<ImageSourceMatcher, ImageRender> customImageRenders;
 
   /// A function that defines what to do when an image errors
-  final ImageErrorListener? onImageError;
+  final ImageErrorListener onImageError;
 
   /// A function that defines what to do when either <math> or <tex> fails to render
   /// You can return a widget here to override the default error widget.
-  final OnMathError? onMathError;
+  final OnMathError onMathError;
 
 
   /// A parameter that should be set when the HTML widget is expected to be
@@ -106,7 +106,7 @@ class Html extends StatelessWidget {
   final bool shrinkWrap;
 
   /// A function that defines what to do when an image is tapped
-  final OnTap? onImageTap;
+  final OnTap onImageTap;
 
   /// A list of HTML tags that defines what elements are not rendered
   final List<String> tagsList;
@@ -121,7 +121,7 @@ class Html extends StatelessWidget {
   /// Decides how to handle a specific navigation request in the WebView of an
   /// Iframe. It's necessary to use the webview_flutter package inside the app
   /// to use NavigationDelegate.
-  final NavigationDelegate? navigationDelegateForIframe;
+  final NavigationDelegate navigationDelegateForIframe;
 
   static List<String> get tags => new List<String>.from(STYLED_ELEMENTS)
     ..addAll(INTERACTABLE_ELEMENTS)
@@ -132,8 +132,8 @@ class Html extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dom.Document doc = data != null ? HtmlParser.parseHTML(data!) : document!;
-    final double? width = shrinkWrap ? null : MediaQuery.of(context).size.width;
+    final dom.Document doc = data != null ? HtmlParser.parseHTML(data) : document;
+    final double width = shrinkWrap ? null : MediaQuery.of(context).size.width;
 
     return Container(
       width: width,

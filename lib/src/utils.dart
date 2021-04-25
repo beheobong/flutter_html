@@ -91,7 +91,7 @@ class CustomBorderSide {
     this.style = BorderStyle.none,
   }) : assert(width >= 0.0);
 
-  Color? color;
+  Color color;
   double width;
   BorderStyle style;
 }

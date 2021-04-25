@@ -8,14 +8,14 @@ import 'package:html/dom.dart' as dom;
 
 typedef ImageSourceMatcher = bool Function(
   Map<String, String> attributes,
-  dom.Element? element,
+  dom.Element element,
 );
 
-final _dataUriFormat = RegExp("^(?<scheme>data):(?<mime>image\/[\\w\+\-\.]+)(?<encoding>;base64)?\,(?<data>.*)");
+final _dataUriFormat = RegExp("^(<scheme>data):(<mime>image\/[\\w\+\-\.]+)(<encoding>;base64)\,(<data>.*)");
 
-ImageSourceMatcher dataUriMatcher({String? encoding = 'base64', String? mime}) => (attributes, element) {
+ImageSourceMatcher dataUriMatcher({String encoding = 'base64', String mime}) => (attributes, element) {
       if (_src(attributes) == null) return false;
-      final dataUri = _dataUriFormat.firstMatch(_src(attributes)!);
+      final dataUri = _dataUriFormat.firstMatch(_src(attributes));
       return dataUri != null &&
           (mime == null || dataUri.namedGroup('mime') == mime) &&
           (encoding == null || dataUri.namedGroup('encoding') == ';$encoding');
@@ -23,13 +23,13 @@ ImageSourceMatcher dataUriMatcher({String? encoding = 'base64', String? mime}) =
 
 ImageSourceMatcher networkSourceMatcher({
   List<String> schemas: const ["https", "http"],
-  List<String>? domains,
-  String? extension,
+  List<String> domains,
+  String extension,
 }) =>
     (attributes, element) {
       if (_src(attributes) == null) return false;
       try {
-        final src = Uri.parse(_src(attributes)!);
+        final src = Uri.parse(_src(attributes));
         return schemas.contains(src.scheme) &&
             (domains == null || domains.contains(src.host)) &&
             (extension == null || src.path.endsWith(".$extension"));
@@ -39,22 +39,22 @@ ImageSourceMatcher networkSourceMatcher({
     };
 
 ImageSourceMatcher assetUriMatcher() => (attributes, element) =>
-    _src(attributes) != null && _src(attributes)!.startsWith("asset:");
+    _src(attributes) != null && _src(attributes).startsWith("asset:");
 
-typedef ImageRender = Widget? Function(
+typedef ImageRender = Widget Function(
   RenderContext context,
   Map<String, String> attributes,
-  dom.Element? element,
+  dom.Element element,
 );
 
 ImageRender base64ImageRender() => (context, attributes, element) {
       final decodedImage =
-          base64.decode(_src(attributes)!.split("base64,")[1].trim());
+          base64.decode(_src(attributes).split("base64,")[1].trim());
       precacheImage(
         MemoryImage(decodedImage),
         context.buildContext,
-        onError: (exception, StackTrace? stackTrace) {
-          context.parser.onImageError?.call(exception, stackTrace);
+        onError: (exception, StackTrace stackTrace) {
+          context.parser.onImageError.call(exception, stackTrace);
         },
       );
       return Image.memory(
@@ -69,12 +69,12 @@ ImageRender base64ImageRender() => (context, attributes, element) {
     };
 
 ImageRender assetImageRender({
-  double? width,
-  double? height,
+  double width,
+  double height,
 }) =>
     (context, attributes, element) {
-      final assetPath = _src(attributes)!.replaceFirst('asset:', '');
-      if (_src(attributes)!.endsWith(".svg")) {
+      final assetPath = _src(attributes).replaceFirst('asset:', '');
+      if (_src(attributes).endsWith(".svg")) {
         return SvgPicture.asset(assetPath);
       } else {
         return Image.asset(
@@ -92,23 +92,23 @@ ImageRender assetImageRender({
     };
 
 ImageRender networkImageRender({
-  Map<String, String>? headers,
-  String Function(String?)? mapUrl,
-  double? width,
-  double? height,
-  Widget Function(String?)? altWidget,
-  Widget Function()? loadingWidget,
+  Map<String, String> headers,
+  String Function(String) mapUrl,
+  double width,
+  double height,
+  Widget Function(String) altWidget,
+  Widget Function() loadingWidget,
 }) =>
     (context, attributes, element) {
-      final src = mapUrl?.call(_src(attributes)) ?? _src(attributes)!;
+      final src = mapUrl.call(_src(attributes)) ?? _src(attributes);
       precacheImage(
         NetworkImage(
           src,
           headers: headers,
         ),
         context.buildContext,
-        onError: (exception, StackTrace? stackTrace) {
-          context.parser.onImageError?.call(exception, stackTrace);
+        onError: (exception, StackTrace stackTrace) {
+          context.parser.onImageError.call(exception, stackTrace);
         },
       );
       Completer<Size> completer = Completer();
@@ -143,31 +143,31 @@ ImageRender networkImageRender({
             return Image.network(
               src,
               headers: headers,
-              width: width ?? _width(attributes) ?? snapshot.data!.width,
+              width: width ?? _width(attributes) ?? snapshot.data.width,
               height: height ?? _height(attributes),
               frameBuilder: (ctx, child, frame, _) {
                 if (frame == null) {
-                  return altWidget?.call(_alt(attributes)) ??
+                  return altWidget.call(_alt(attributes)) ??
                       Text(_alt(attributes) ?? "", style: context.style.generateTextStyle());
                 }
                 return child;
               },
             );
           } else if (snapshot.hasError) {
-            return altWidget?.call(_alt(attributes)) ??
+            return altWidget.call(_alt(attributes)) ??
                 Text(_alt(attributes) ?? "", style: context.style.generateTextStyle());
           } else {
-            return loadingWidget?.call() ?? const CircularProgressIndicator();
+            return loadingWidget.call() ?? const CircularProgressIndicator();
           }
         },
       );
     };
 
 ImageRender svgDataImageRender() => (context, attributes, element) {
-      final dataUri = _dataUriFormat.firstMatch(_src(attributes)!);
-      final data = dataUri?.namedGroup('data');
+      final dataUri = _dataUriFormat.firstMatch(_src(attributes));
+      final data = dataUri.namedGroup('data');
       if (data == null) return null;
-      if (dataUri?.namedGroup('encoding') == ';base64') {
+      if (dataUri.namedGroup('encoding') == ';base64') {
         final decodedImage = base64.decode(data.trim());
         return SvgPicture.memory(
           decodedImage,
@@ -180,7 +180,7 @@ ImageRender svgDataImageRender() => (context, attributes, element) {
 
 ImageRender svgNetworkImageRender() => (context, attributes, element) {
       return SvgPicture.network(
-        attributes["src"]!,
+        attributes["src"],
         width: _width(attributes),
         height: _height(attributes),
       );
@@ -194,20 +194,20 @@ final Map<ImageSourceMatcher, ImageRender> defaultImageRenders = {
   networkSourceMatcher(): networkImageRender(),
 };
 
-String? _src(Map<String, String> attributes) {
+String _src(Map<String, String> attributes) {
   return attributes["src"];
 }
 
-String? _alt(Map<String, String> attributes) {
+String _alt(Map<String, String> attributes) {
   return attributes["alt"];
 }
 
-double? _height(Map<String, String> attributes) {
+double _height(Map<String, String> attributes) {
   final heightString = attributes["height"];
-  return heightString == null ? heightString as double? : double.tryParse(heightString);
+  return heightString == null ?  heightString as double : double.tryParse(heightString);
 }
 
-double? _width(Map<String, String> attributes) {
+double _width(Map<String, String> attributes) {
   final widthString = attributes["width"];
-  return widthString == null ? widthString as double? : double.tryParse(widthString);
+  return widthString == null ? widthString as double : double.tryParse(widthString);
 }
